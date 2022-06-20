@@ -42,11 +42,8 @@ Y = np.array(Y)
 Yc = to_categorical(Y)
 
 
-test_image1 = X[-1]
-test_label1 = Yc[-1]
-test_image2 = X[-2]
-test_label2 = Yc[-2]
-x_train, x_val, y_train, y_val = train_test_split(X[0:-2], Yc[0:-2], test_size = 0.1)
+
+xTrain, xValidation, yTrain, yValidation = train_test_split(X[0:-40], Yc[0:-40], test_size = 0.15)
 
 
 #build model
@@ -111,8 +108,8 @@ model_earlyStopping = EarlyStopping(min_delta= 0.001, patience=15)
 model.compile(optimizer='adam', loss=['categorical_crossentropy'], metrics=['accuracy'])
 
 #train model
-history = model.fit(x=x_train, y=y_train,
-              validation_data=(x_val, y_val),
+history = model.fit(x=xTrain, y=yTrain,
+              validation_data=(xValidation, yValidation),
               batch_size=4, epochs=100,
               callbacks=[model_checkpoint, model_earlyStopping])
 
@@ -125,20 +122,25 @@ epochs_range = range(len(acc))
 
 plt.figure(figsize=(15, 15))
 plt.subplot(2, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
+plt.plot(epochs_range, acc, label='Train Accuracy')
 plt.plot(epochs_range, val_acc, label='Validation Accuracy')
 plt.legend(loc='lower right')
 plt.title('Training and Validation Accuracy')
 
 plt.subplot(2, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
+plt.plot(epochs_range, loss, label='Train Loss')
 plt.plot(epochs_range, val_loss, label='Validation Loss')
 plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
+plt.title('Training & Validation Loss plot')
 plt.show()
 
 
-image1 = test_image1
+test1 = X[-1]
+test2 = X[-2]
+test1mask = Yc[-1]
+test2mask = Yc[-2]
+
+image1 = test1
 pred = model.predict(np.expand_dims(image1, 0))
 pred_mask = np.argmax(pred, axis=-1)
 print(pred_mask.shape)
@@ -150,23 +152,23 @@ print(pred_mask.shape)
 fig, axs = plt.subplots(1, 3, figsize=(20, 10))
 axs[0].imshow(image1)
 axs[0].set_title('Image')
-axs[1].imshow(np.argmax(test_label1, axis=-1))
+axs[1].imshow(np.argmax(test1mask, axis=-1))
 axs[1].set_title('Ground Truth')
 axs[2].imshow(pred_mask)
 axs[2].set_title('Prediction')
 
 
 
-intersection = np.logical_and(np.argmax(test_label1, axis=-1), pred_mask)
-union = np.logical_or(np.argmax(test_label1, axis=-1), pred_mask)
+intersection = np.logical_and(np.argmax(test1mask, axis=-1), pred_mask)
+union = np.logical_or(np.argmax(test1mask, axis=-1), pred_mask)
 iou_score1 = np.sum(intersection) / np.sum(union)
 print("iou_score1",iou_score1)
 
 
-pix_acc1=np.sum(np.equal(np.argmax(test_label1, axis=-1), pred_mask))/(256*256)
+pix_acc1=np.sum(np.equal(np.argmax(test1mask, axis=-1), pred_mask))/(256*256)
 print("pix_acc1",pix_acc1)
 
-image2 = test_image2
+image2 = test2
 pred2 = model.predict(np.expand_dims(image2, 0))
 pred_mask2 = np.argmax(pred2, axis=-1)
 print(pred_mask2.shape)
@@ -176,17 +178,17 @@ print(pred_mask2.shape)
 fig, axs = plt.subplots(1, 3, figsize=(20, 10))
 axs[0].imshow(image2)
 axs[0].set_title('Image')
-axs[1].imshow(np.argmax(test_label2, axis=-1))
+axs[1].imshow(np.argmax(test2mask, axis=-1))
 axs[1].set_title('Ground Truth')
 axs[2].imshow(pred_mask2)
 axs[2].set_title('Prediction')
 
-intersection1 = np.logical_and(np.argmax(test_label2, axis=-1), np.argmax(pred2, axis=-1))
-union1 = np.logical_or(np.argmax(test_label2, axis=-1), np.argmax(pred2, axis=-1))
+intersection1 = np.logical_and(np.argmax(test2mask, axis=-1), np.argmax(pred2, axis=-1))
+union1 = np.logical_or(np.argmax(test2mask, axis=-1), np.argmax(pred2, axis=-1))
 iou_score2 = np.sum(intersection1) / np.sum(union1)
 print("iou_score2",iou_score2)
 
-pix_acc2=np.sum(np.equal(np.argmax(test_label2, axis=-1), pred_mask2))/(256*256)
+pix_acc2=np.sum(np.equal(np.argmax(test2mask, axis=-1), pred_mask2))/(256*256)
 print("pix_acc2:",pix_acc2)
 
 
